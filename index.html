@@ -75,20 +75,27 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* floater отвечает ТОЛЬКО за scale-пульс */
+  .coin-floater {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .coin-floater.idle {
+    animation: idle-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes idle-pulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.07); }
+  }
+
+  /* coin отвечает ТОЛЬКО за rotateY */
   .coin {
     width: 100%;
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
     will-change: transform;
-  }
-
-  .coin.idle {
-    animation: idle-pulse 2.2s ease-in-out infinite;
-  }
-  @keyframes idle-pulse {
-    0%, 100% { transform: scale(1); }
-    50%       { transform: scale(1.07); }
   }
 
   .face {
@@ -99,7 +106,6 @@
     -webkit-backface-visibility: hidden;
     overflow: hidden;
   }
-
   .face img {
     width: 100%;
     height: 100%;
@@ -107,10 +113,10 @@
     border-radius: 50%;
     display: block;
   }
-
   .face-front { transform: rotateY(0deg); }
   .face-back  { transform: rotateY(180deg); }
 
+  /* свечение результата */
   .result-ring {
     position: absolute;
     inset: -12px;
@@ -119,9 +125,9 @@
     transition: opacity 0.4s;
     pointer-events: none;
   }
-  .result-ring.drink-ring    { box-shadow: 0 0 35px 12px rgba(255,107,53,0.6), 0 0 70px 25px rgba(255,107,53,0.2); }
-  .result-ring.no-drink-ring { box-shadow: 0 0 35px 12px rgba(74,222,128,0.6), 0 0 70px 25px rgba(74,222,128,0.2); }
-  .result-ring.show          { opacity: 1; }
+  .result-ring.drink-ring   { box-shadow: 0 0 40px 14px rgba(74,222,128,0.6), 0 0 80px 28px rgba(74,222,128,0.2); }
+  .result-ring.no-drink-ring{ box-shadow: 0 0 40px 14px rgba(239,68,68,0.6),  0 0 80px 28px rgba(239,68,68,0.2); }
+  .result-ring.show         { opacity: 1; }
 
   /* ===== ФРАЗА ===== */
   .phrase-wrap {
@@ -134,7 +140,6 @@
     justify-content: center;
     width: 100%;
   }
-
   .phrase {
     font-size: 1.05rem;
     font-weight: 500;
@@ -146,8 +151,8 @@
     padding: 0 0.5rem;
   }
   .phrase.visible  { opacity: 1; transform: translateY(0); }
-  .phrase.drink    { color: #ff8050; }
-  .phrase.no-drink { color: #4ade80; }
+  .phrase.drink    { color: #4ade80; }
+  .phrase.no-drink { color: #ef4444; }
 
   /* ===== КНОПКА ===== */
   .btn-wrap {
@@ -155,7 +160,6 @@
     z-index: 1;
     width: 100%;
   }
-
   .btn {
     display: block;
     width: 100%;
@@ -176,54 +180,51 @@
   }
   .btn:active   { transform: scale(0.97); }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-
   .btn.drink-btn {
-    background: linear-gradient(135deg, #ff9060, #ff6b35);
-    box-shadow: 0 4px 24px rgba(255,107,53,0.45);
-    color: #fff;
+    background: linear-gradient(135deg, #6ee7a0, #22c55e);
+    box-shadow: 0 4px 24px rgba(74,222,128,0.45);
+    color: #052e16;
   }
   .btn.no-drink-btn {
-    background: linear-gradient(135deg, #6ee7a0, #4ade80);
-    box-shadow: 0 4px 24px rgba(74,222,128,0.4);
-    color: #0a1f12;
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    box-shadow: 0 4px 24px rgba(239,68,68,0.4);
+    color: #fff;
   }
 
-  /* confetti */
-  .confetti-wrap {
+  /* всплывашки */
+  .fx-wrap {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 10;
     overflow: hidden;
   }
-  .conf {
+  .fx-item {
     position: absolute;
-    top: -20px;
+    top: -40px;
     opacity: 0;
-    animation: conffall 1.6s ease-in forwards;
+    animation: fxfall linear forwards;
   }
-  @keyframes conffall {
-    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  @keyframes fxfall {
+    0%   { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(var(--rot)); opacity: 0; }
   }
 </style>
 </head>
 <body>
 
 <div class="particles" id="particles"></div>
-<div class="confetti-wrap" id="confetti"></div>
+<div class="fx-wrap" id="fxWrap"></div>
 
 <header class="header">
   <h1>Монетка решает</h1>
 </header>
 
 <div class="scene" id="scene" onclick="flipCoin()">
-  <div class="coin idle" id="coin">
-    <div class="face face-front">
-      <img src="yes.png" alt="ПИТЬ">
-    </div>
-    <div class="face face-back">
-      <img src="no.png" alt="НЕ ПИТЬ">
+  <div class="coin-floater idle" id="coinFloater">
+    <div class="coin" id="coin">
+      <div class="face face-front"><img src="yes.png" alt="ПИТЬ"></div>
+      <div class="face face-back"><img src="no.png" alt="НЕ ПИТЬ"></div>
     </div>
   </div>
   <div class="result-ring" id="resultRing"></div>
@@ -267,10 +268,11 @@ const PHRASES_NO_DRINK = [
   "Монетка проголосовала за минеральную воду.",
 ];
 
-const coin       = document.getElementById('coin');
-const phrase     = document.getElementById('phrase');
-const flipBtn    = document.getElementById('flipBtn');
-const resultRing = document.getElementById('resultRing');
+const coin        = document.getElementById('coin');
+const coinFloater = document.getElementById('coinFloater');
+const phrase      = document.getElementById('phrase');
+const flipBtn     = document.getElementById('flipBtn');
+const resultRing  = document.getElementById('resultRing');
 
 let spinning   = false;
 let currentDeg = 0;
@@ -291,13 +293,11 @@ function flipCoin() {
   if (spinning) return;
   spinning = true;
   flipBtn.disabled = true;
-
   haptic('impact');
 
   phrase.classList.remove('visible', 'drink', 'no-drink');
   resultRing.className = 'result-ring';
-  coin.classList.remove('idle');
-  coin.style.transform = '';
+  coinFloater.classList.remove('idle');
 
   const result     = Math.random() < 0.5 ? 'drink' : 'no-drink';
   const spins      = 8 + Math.floor(Math.random() * 5);
@@ -324,7 +324,15 @@ function flipCoin() {
     const deg = fromDeg + (toDeg - fromDeg) * easeOut(p);
     coin.style.transform = `rotateY(${deg}deg)`;
     currentDeg = deg;
-    if (p < 1) { requestAnimationFrame(animate); } else { clearInterval(spinInterval); onLanded(result); }
+    if (p < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      clearInterval(spinInterval);
+      // фиксируем финальный угол явно
+      coin.style.transform = `rotateY(${finalAngle}deg)`;
+      currentDeg = finalAngle;
+      onLanded(result);
+    }
   }
 
   requestAnimationFrame(animate);
@@ -332,7 +340,7 @@ function flipCoin() {
 
 function onLanded(result) {
   spinning = false;
-  haptic(result === 'drink' ? 'warning' : 'success');
+  haptic(result === 'drink' ? 'success' : 'warning');
 
   resultRing.className = `result-ring ${result === 'drink' ? 'drink-ring' : 'no-drink-ring'} show`;
 
@@ -344,30 +352,56 @@ function onLanded(result) {
   flipBtn.textContent = '🎲 Ещё раз';
   flipBtn.disabled    = false;
 
-  if (result === 'drink') spawnConfetti();
+  if (result === 'drink') spawnFireworks();
+  else spawnSadEmojis();
 
-  setTimeout(() => coin.classList.add('idle'), 400);
+  // idle на floater — coin.style.transform остаётся нетронутым
+  setTimeout(() => coinFloater.classList.add('idle'), 400);
 }
 
-function spawnConfetti() {
-  const wrap   = document.getElementById('confetti');
+function spawnFireworks() {
+  const wrap = document.getElementById('fxWrap');
   wrap.innerHTML = '';
-  const colors = ['#f5c842','#ff6b35','#ffd700','#fff','#fde68a','#c9952a'];
-  for (let i = 0; i < 45; i++) {
-    const el   = document.createElement('div');
-    el.className = 'conf';
+  const colors = ['#4ade80','#22c55e','#86efac','#f5c842','#fff','#bbf7d0'];
+  for (let i = 0; i < 55; i++) {
+    const el = document.createElement('div');
+    el.className = 'fx-item';
     const size = 6 + Math.random() * 10;
+    const rot  = Math.round(Math.random() * 720 - 360);
     el.style.cssText = `
       left:${Math.random()*100}%;
       width:${size}px; height:${size}px;
       background:${colors[Math.floor(Math.random()*colors.length)]};
-      border-radius:${Math.random()>.5?'50%':'3px'};
-      animation-delay:${Math.random()*0.5}s;
-      animation-duration:${1.2+Math.random()*0.9}s;
+      border-radius:${Math.random()>.4?'50%':'3px'};
+      --rot:${rot}deg;
+      animation-delay:${Math.random()*0.6}s;
+      animation-duration:${1.3+Math.random()*1}s;
     `;
     wrap.appendChild(el);
   }
-  setTimeout(() => { wrap.innerHTML = ''; }, 2600);
+  setTimeout(() => { wrap.innerHTML = ''; }, 2800);
+}
+
+function spawnSadEmojis() {
+  const wrap   = document.getElementById('fxWrap');
+  wrap.innerHTML = '';
+  const emojis = ['😢','😭','😔','💔','😞','🥲','😿'];
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('div');
+    el.className = 'fx-item';
+    const size = 22 + Math.random() * 16;
+    const rot  = Math.round(Math.random() * 40 - 20);
+    el.style.cssText = `
+      left:${Math.random()*100}%;
+      font-size:${size}px;
+      --rot:${rot}deg;
+      animation-delay:${Math.random()*0.8}s;
+      animation-duration:${2+Math.random()*1.2}s;
+    `;
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    wrap.appendChild(el);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 4000);
 }
 
 (function spawnParticles() {
