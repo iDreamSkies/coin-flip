@@ -762,22 +762,58 @@ async function shareResult() {
   }
 }
 
-/* СЧЁТЧИК */
-async function loadTotalFlips() {
-  const el = document.getElementById('totalFlips');
+/* FIREBASE */
+function initFirebase() {
   try {
-    const r = await fetch('https://api.countapi.xyz/info/drink-or-not-bot/total-flips');
-    const d = await r.json();
-    if (d.value) { el.textContent = '🎲 ' + d.value.toLocaleString('ru') + ' бросков всего'; el.classList.add('loaded'); }
-  } catch(e) {}
+    firebase.initializeApp({
+      apiKey: "AIzaSyAMeJOHjo2xa8rNfef898VWL0VddbfiDek",
+      databaseURL: "https://coin-flip-62911-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "coin-flip-62911",
+      appId: "1:12263735583:web:568281cf1e57895499f02a"
+    });
+    const db = firebase.database();
+    window._fbDb = db;
+
+    const sid = Math.random().toString(36).slice(2);
+    const myRef = db.ref('online/' + sid);
+    myRef.set(true);
+    myRef.onDisconnect().remove();
+
+    db.ref('online').on('value', snap => {
+      const n = snap.numChildren();
+      const wrap = document.getElementById('onlineWrap');
+      const el   = document.getElementById('onlineCount');
+      if (wrap) {
+        wrap.style.display = n > 0 ? 'flex' : 'none';
+        el.textContent = n + ' ' + plural(n, 'человек', 'человека', 'человек') + ' онлайн';
+      }
+    });
+
+    db.ref('stats/totalFlips').once('value', snap => {
+      updateFlipsUI(snap.val() || 0);
+    });
+  } catch(e) { console.warn('Firebase:', e); }
 }
-async function incrementFlips() {
+
+function incrementFlips() {
+  const db = window._fbDb;
+  if (!db) return;
+  db.ref('stats/totalFlips').transaction(v => (v || 0) + 1, (err, ok, snap) => {
+    if (!err && ok) updateFlipsUI(snap.val());
+  });
+}
+
+function updateFlipsUI(n) {
   const el = document.getElementById('totalFlips');
-  try {
-    const r = await fetch('https://api.countapi.xyz/hit/drink-or-not-bot/total-flips');
-    const d = await r.json();
-    if (d.value) { el.textContent = '🎲 ' + d.value.toLocaleString('ru') + ' бросков всего'; el.classList.add('loaded'); }
-  } catch(e) {}
+  if (el) { el.textContent = '🎲 ' + Number(n).toLocaleString('ru') + ' бросков всего'; el.classList.add('loaded'); }
+}
+
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m100 >= 11 && m100 <= 14) return many;
+  if (m10 === 1) return one;
+  if (m10 >= 2 && m10 <= 4) return few;
+  return many;
 }
 
 /* ЭФФЕКТЫ */
@@ -819,7 +855,7 @@ function spawnSadEmojis() {
 buildModes();
 buildSeries();
 updateStats();
-loadTotalFlips();
+initFirebase();
 </script>
 </body>
 </html>
