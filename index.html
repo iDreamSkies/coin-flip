@@ -6,7 +6,7 @@
 <title>Пить или не пить?</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -39,6 +39,21 @@ body {
   flex-direction: column;
   min-height: 100dvh;
   padding: 0;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.055;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(245,200,66,0.16), transparent 28%),
+    radial-gradient(circle at 80% 70%, rgba(239,68,68,0.09), transparent 26%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.12) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
 }
 
 /* частицы */
@@ -58,7 +73,8 @@ body {
   padding: 14px 0 10px;
   text-align: center;
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: rgba(14,14,16,0.88);
+  backdrop-filter: blur(14px);
 }
 
 .header h1 {
@@ -72,9 +88,7 @@ body {
 }
 
 /* режимы — горизонтальный скролл */
-.modes-wrap {
-  position: relative;
-}
+.modes-wrap { position: relative; }
 .modes-wrap::before,
 .modes-wrap::after {
   content: '';
@@ -106,7 +120,7 @@ body {
   padding: 6px 12px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--bg2);
+  background: rgba(22,22,24,0.86);
   color: var(--muted);
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
@@ -114,12 +128,14 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .mode-tab .emoji { font-size: 0.85rem; }
 .mode-tab.active {
-  background: #1a1500;
+  background: linear-gradient(180deg, rgba(245,200,66,0.16), rgba(26,21,0,0.88));
   border-color: rgba(245,200,66,0.4);
   color: var(--gold);
+  box-shadow: 0 0 16px rgba(245,200,66,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 /* ===== ОСНОВНАЯ ЗОНА ===== */
@@ -147,9 +163,10 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   border: 1px solid var(--border);
-  background: var(--bg2);
+  background: rgba(22,22,24,0.84);
   color: var(--muted);
   transition: all 0.3s;
+  backdrop-filter: blur(10px);
 }
 .stat-badge.yes.active { border-color: rgba(74,222,128,0.3); color: var(--green); background: rgba(74,222,128,0.06); }
 .stat-badge.no.active  { border-color: rgba(239,68,68,0.3);  color: var(--red);   background: rgba(239,68,68,0.06); }
@@ -169,19 +186,56 @@ body {
 .scene {
   position: relative;
   perspective: 900px;
-  width: 240px;
-  height: 240px;
+  width: 250px;
+  height: 250px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
-.coin-floater { width: 100%; height: 100%; }
-.coin-floater.idle { animation: idle-pulse 2.2s ease-in-out infinite; }
-@keyframes idle-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.06); }
+.coin-floater {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
+
+.coin-floater::before {
+  content: '';
+  position: absolute;
+  inset: -28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,200,66,0.22), rgba(74,222,128,0.14) 42%, transparent 70%);
+  filter: blur(14px);
+  opacity: 0.75;
+  z-index: -1;
+  transform: scale(1);
+  animation: glow-pulse 2.2s ease-in-out infinite;
+}
+
+.coin-floater.idle { animation: idle-pulse 2.2s ease-in-out infinite; z-index: 2;}
+
+@keyframes idle-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotateZ(-0.4deg);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.035) rotateZ(0.4deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.55;
+    filter: blur(13px);
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+    filter: blur(18px);
+  }
+}
+
 .coin {
   width: 100%; height: 100%;
   position: relative;
@@ -200,12 +254,12 @@ body {
 .face-back  { transform: rotateY(180deg); }
 
 .result-ring {
-  position: absolute; inset: -10px;
+  position: absolute; inset: 0px;
   border-radius: 50%; opacity: 0;
   transition: opacity 0.4s; pointer-events: none;
 }
-.result-ring.drink-ring    { box-shadow: 0 0 36px 12px rgba(74,222,128,0.5), 0 0 70px 24px rgba(74,222,128,0.15); }
-.result-ring.no-drink-ring { box-shadow: 0 0 36px 12px rgba(239,68,68,0.5),  0 0 70px 24px rgba(239,68,68,0.15); }
+.result-ring.drink-ring    { box-shadow: 0 0 50px 12px rgba(74,222,128,0.5), 0 0 70px 24px rgba(74,222,128,0.15); }
+.result-ring.no-drink-ring { box-shadow: 0 0 50px 12px rgba(239,68,68,0.5),  0 0 70px 24px rgba(239,68,68,0.15); }
 .result-ring.show          { opacity: 1; }
 
 /* серия точки */
@@ -248,7 +302,8 @@ body {
   z-index: 2;
   padding: 12px 16px 16px;
   border-top: 1px solid var(--border);
-  background: var(--bg);
+  background: rgba(14,14,16,0.88);
+  backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -263,36 +318,76 @@ body {
 }
 
 .btn-flip {
-  flex: 0 1 260px;
-  padding: 14px 20px;
-  border-radius: 14px; border: none;
+  flex: 0 1 280px;
+  padding: 15px 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
   font-family: 'Unbounded', sans-serif;
-  font-size: 0.82rem; font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: transform 0.1s, box-shadow 0.2s, background 0.3s;
-  background: linear-gradient(135deg, #f5c842, #d4951a);
-  color: #1a0e00;
-  box-shadow: 0 4px 20px rgba(245,200,66,0.25);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.28), transparent 35%),
+    linear-gradient(135deg, #f7d45a, #d79a1c 55%, #a66b05);
+  color: #170d00;
+  box-shadow:
+    0 8px 28px rgba(245,200,66,0.24),
+    inset 0 1px 0 rgba(255,255,255,0.38);
+}
+.btn-flip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  transform: skewX(-18deg);
+  animation: btnShine 3.4s ease-in-out infinite;
+}
+@keyframes btnShine {
+  0%, 55% { left: -80%; }
+  100% { left: 130%; }
 }
 .btn-flip:active   { transform: scale(0.97); }
 .btn-flip:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-.btn-flip.drink    { background: linear-gradient(135deg, #6ee7a0, #22c55e); box-shadow: 0 4px 20px rgba(74,222,128,0.3); color: #052e16; }
-.btn-flip.no-drink { background: linear-gradient(135deg, #f87171, #ef4444); box-shadow: 0 4px 20px rgba(239,68,68,0.3); color: #fff; }
+.btn-flip.drink {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.28), transparent 35%),
+    linear-gradient(135deg, #6ee7a0, #22c55e 60%, #16803d);
+  box-shadow: 0 8px 28px rgba(74,222,128,0.28), inset 0 1px 0 rgba(255,255,255,0.28);
+  color: #052e16;
+}
+.btn-flip.no-drink {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.22), transparent 35%),
+    linear-gradient(135deg, #f87171, #ef4444 60%, #991b1b);
+  box-shadow: 0 8px 28px rgba(239,68,68,0.28), inset 0 1px 0 rgba(255,255,255,0.20);
+  color: #fff;
+}
 
 .btn-share {
   flex-shrink: 0;
-  width: 48px; height: 48px;
-  border-radius: 14px; border: 1px solid var(--border);
-  background: var(--bg2);
-  color: var(--muted);
-  font-size: 1rem; font-weight: 600;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
   display: none;
-  align-items: center; justify-content: center;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.btn-share:hover { border-color: rgba(255,255,255,0.15); color: #aaa; }
+.btn-share:hover { border-color: rgba(245,200,66,0.22); color: #f7d45a; }
 .btn-share.show { display: flex; }
 
 /* серия */
@@ -306,7 +401,7 @@ body {
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--bg2);
+  background: rgba(22,22,24,0.86);
   color: var(--muted);
   font-family: 'Inter', sans-serif;
   font-size: 0.7rem; font-weight: 600;
@@ -339,6 +434,7 @@ body {
 .footer {
   position: relative; z-index: 2;
   padding: 0 16px 8px;
+  background: rgba(14,14,16,0.88);
 }
 .footer-inner {
   display: flex;
@@ -406,7 +502,6 @@ body {
 <div class="fx-wrap" id="fxWrap"></div>
 <div class="toast" id="toast"></div>
 
-<!-- ШАПКА -->
 <header class="header">
   <h1>Монетка решает</h1>
   <div class="modes-wrap">
@@ -414,14 +509,12 @@ body {
   </div>
 </header>
 
-<!-- ОСНОВНАЯ ЗОНА -->
 <main class="main">
   <div class="stats">
     <div class="stat-badge yes" id="yesCount">—</div>
     <span class="stat-sep">·</span>
     <div class="stat-badge no" id="noCount">—</div>
   </div>
-
 
   <div class="scene" id="scene" onclick="flipCoin()">
     <div class="coin-floater idle" id="coinFloater">
@@ -442,7 +535,6 @@ body {
   <div class="total-flips" id="totalFlips"></div>
 </main>
 
-<!-- НИЖНЯЯ ПАНЕЛЬ -->
 <div class="bottom">
   <div class="action-row">
     <button class="btn-flip" id="flipBtn" onclick="flipCoin()">🎲 Бросить монетку</button>
@@ -540,7 +632,6 @@ const yesCountEl  = document.getElementById('yesCount');
 const noCountEl   = document.getElementById('noCount');
 const toastEl     = document.getElementById('toast');
 
-/* РЕЖИМЫ */
 function buildModes() {
   const wrap = document.getElementById('modes');
   MODES.forEach((m, i) => {
@@ -550,7 +641,6 @@ function buildModes() {
     btn.onclick = () => setMode(i);
     wrap.appendChild(btn);
   });
-  // spacer — фикс правого края при overflow scroll
   const spacer = document.createElement('div');
   spacer.style.cssText = 'min-width:16px;flex-shrink:0;';
   wrap.appendChild(spacer);
@@ -566,7 +656,6 @@ function setMode(i) {
   updateStats();
 }
 
-/* СЕРИЯ */
 function buildSeries() {
   const wrap = document.getElementById('seriesRow');
   ['Выкл', 'Лучший из 3', 'Лучший из 5'].forEach((label, i) => {
@@ -611,7 +700,6 @@ function renderSeriesDots() {
   }
 }
 
-/* СТАТИСТИКА */
 function updateStats() {
   const s = modeStats[currentMode], m = MODES[currentMode];
   const yLabel = m.yes[0] + m.yes.slice(1).toLowerCase();
@@ -622,7 +710,6 @@ function updateStats() {
   noCountEl.classList.toggle('active', s.no > 0);
 }
 
-/* ЗВУК */
 function getAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -652,7 +739,6 @@ function playResult(win) {
   } catch(e) {}
 }
 
-/* ХАПТИК */
 function haptic(type) {
   try {
     if (tg?.HapticFeedback) {
@@ -663,14 +749,12 @@ function haptic(type) {
   } catch(e) {}
 }
 
-/* ТОСТ */
 function showToast(text) {
   toastEl.textContent = text;
   toastEl.classList.add('show');
   setTimeout(() => toastEl.classList.remove('show'), 2000);
 }
 
-/* СБРОС */
 function resetRound() {
   phraseEl.className = 'phrase'; phraseEl.innerHTML = '';
   resultRing.className = 'result-ring';
@@ -681,7 +765,6 @@ function resetRound() {
   lastResult = null;
 }
 
-/* БРОСОК */
 function flipCoin() {
   if (spinning) return;
   spinning = true;
@@ -734,7 +817,6 @@ function flipCoin() {
   requestAnimationFrame(animate);
 }
 
-/* РЕЗУЛЬТАТ */
 function onLanded(result) {
   spinning = false; lastResult = result;
   const mode = MODES[currentMode], isYes = result === 'yes';
@@ -774,7 +856,6 @@ function onLanded(result) {
   setTimeout(() => coinFloater.classList.add('idle'), 400);
 }
 
-/* АНИМАЦИЯ БУКВ */
 function animatePhrase(text, cls) {
   phraseEl.innerHTML = text.split('').map((ch, i) =>
     `<span style="animation-delay:${i*24}ms">${ch === ' ' ? '&nbsp;' : ch}</span>`
@@ -782,7 +863,6 @@ function animatePhrase(text, cls) {
   phraseEl.className = `phrase ${cls} visible`;
 }
 
-/* ПОДЕЛИТЬСЯ */
 async function shareResult() {
   if (!lastResult) return;
   const m = MODES[currentMode];
@@ -796,7 +876,6 @@ async function shareResult() {
   }
 }
 
-/* FIREBASE */
 function initFirebase() {
   try {
     firebase.initializeApp({
@@ -842,15 +921,6 @@ function updateFlipsUI(n) {
   if (el) { el.textContent = '🎲 ' + Number(n).toLocaleString('ru') + ' бросков всего'; el.classList.add('loaded'); }
 }
 
-function plural(n, one, few, many) {
-  const m10 = n % 10, m100 = n % 100;
-  if (m100 >= 11 && m100 <= 14) return many;
-  if (m10 === 1) return one;
-  if (m10 >= 2 && m10 <= 4) return few;
-  return many;
-}
-
-/* ЭФФЕКТЫ */
 function spawnFireworks() {
   const wrap = document.getElementById('fxWrap'); wrap.innerHTML = '';
   const colors = ['#4ade80','#22c55e','#86efac','#f5c842','#fff','#bbf7d0'];
@@ -875,7 +945,6 @@ function spawnSadEmojis() {
   setTimeout(() => { wrap.innerHTML = ''; }, 4000);
 }
 
-/* ЧАСТИЦЫ */
 (function() {
   const wrap = document.getElementById('particles');
   for (let i = 0; i < 10; i++) {
