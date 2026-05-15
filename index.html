@@ -309,11 +309,26 @@ function flipCoin() {
 
   function easeOut(t) { return 1 - Math.pow(1 - t, 3.5); }
 
+  let lastTickDeg = fromDeg;
+  const tickEvery = 180;
+
   function animate(now) {
     const p   = Math.min((now - start) / duration, 1);
     const deg = fromDeg + (toDeg - fromDeg) * easeOut(p);
     coin.style.transform = `rotateY(${deg}deg)`;
     currentDeg = deg;
+
+    if (Math.floor(deg / tickEvery) > Math.floor(lastTickDeg / tickEvery)) {
+      const speed = 1 - p;
+      if (speed > 0.15) {
+        try {
+          if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred(speed > 0.6 ? 'light' : 'soft');
+          else navigator.vibrate?.(speed > 0.6 ? 12 : 6);
+        } catch(e) {}
+      }
+    }
+    lastTickDeg = deg;
+
     p < 1 ? requestAnimationFrame(animate) : onLanded(result);
   }
 
