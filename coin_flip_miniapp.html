@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Пить или не пить?</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: #0d0d0f;
+    color: #f0f0f0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 100dvh;
+    padding: 2rem 1.5rem 3rem;
+    position: relative;
+  }
+
+  .particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.4; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  }
+
+  .header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  .header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #555;
+    text-transform: uppercase;
+  }
+
+  /* ===== СЦЕНА ===== */
+  .scene {
+    position: relative;
+    z-index: 1;
+    perspective: 900px;
+    width: 240px;
+    height: 240px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .coin {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .coin.idle {
+    animation: idle-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes idle-pulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.07); }
+  }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+  }
+
+  .face img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+  }
+
+  .face-front { transform: rotateY(0deg); }
+  .face-back  { transform: rotateY(180deg); }
+
+  .result-ring {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+  .result-ring.drink-ring    { box-shadow: 0 0 35px 12px rgba(255,107,53,0.6), 0 0 70px 25px rgba(255,107,53,0.2); }
+  .result-ring.no-drink-ring { box-shadow: 0 0 35px 12px rgba(74,222,128,0.6), 0 0 70px 25px rgba(74,222,128,0.2); }
+  .result-ring.show          { opacity: 1; }
+
+  /* ===== ФРАЗА ===== */
+  .phrase-wrap {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .phrase {
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #666;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.45s, transform 0.45s, color 0.3s;
+    padding: 0 0.5rem;
+  }
+  .phrase.visible  { opacity: 1; transform: translateY(0); }
+  .phrase.drink    { color: #ff8050; }
+  .phrase.no-drink { color: #4ade80; }
+
+  /* ===== КНОПКА ===== */
+  .btn-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    padding: 1rem;
+    border-radius: 16px;
+    border: none;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s, background 0.3s;
+    background: linear-gradient(135deg, #f5c842, #e09c1a);
+    color: #1a0e00;
+    box-shadow: 0 4px 24px rgba(245,200,66,0.35);
+  }
+  .btn:active   { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .btn.drink-btn {
+    background: linear-gradient(135deg, #ff9060, #ff6b35);
+    box-shadow: 0 4px 24px rgba(255,107,53,0.45);
+    color: #fff;
+  }
+  .btn.no-drink-btn {
+    background: linear-gradient(135deg, #6ee7a0, #4ade80);
+    box-shadow: 0 4px 24px rgba(74,222,128,0.4);
+    color: #0a1f12;
+  }
+
+  /* confetti */
+  .confetti-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+  }
+  .conf {
+    position: absolute;
+    top: -20px;
+    opacity: 0;
+    animation: conffall 1.6s ease-in forwards;
+  }
+  @keyframes conffall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+<div class="confetti-wrap" id="confetti"></div>
+
+<header class="header">
+  <h1>Монетка решает</h1>
+</header>
+
+<div class="scene" id="scene" onclick="flipCoin()">
+  <div class="coin idle" id="coin">
+    <div class="face face-front">
+      <img src="yes.png" alt="ПИТЬ">
+    </div>
+    <div class="face face-back">
+      <img src="no.png" alt="НЕ ПИТЬ">
+    </div>
+  </div>
+  <div class="result-ring" id="resultRing"></div>
+</div>
+
+<div class="phrase-wrap">
+  <div class="phrase" id="phrase"></div>
+</div>
+
+<div class="btn-wrap">
+  <button class="btn" id="flipBtn" onclick="flipCoin()">🎲 Бросить монетку</button>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.expand(); tg.ready(); }
+
+const PHRASES_DRINK = [
+  "Монетка не ошибается — наливай!",
+  "Вселенная сказала «да». Кто ты такой, чтобы спорить?",
+  "Судьба решила. Бармен ждёт.",
+  "Хочешь не хочешь, а надо. Монетка велела.",
+  "Отказать невозможно. Пить обязательно.",
+  "Ты пытался. Монетка умнее.",
+  "Ответ очевиден. Вопрос — за что пьём?",
+  "Печень сказала нет. Монетка сказала да. Кто главный?",
+  "Это не ты пьёшь — это судьба пьёт твоими руками.",
+  "Медицина рекомендует. В умеренных количествах. Монетка не уточнила.",
+];
+
+const PHRASES_NO_DRINK = [
+  "Монетка спасла твою печень. Цени.",
+  "Трезвость — сила. Монетка знает.",
+  "Завтра скажешь монетке спасибо.",
+  "Вода — тоже напиток. Почти.",
+  "Быть трезвым — это весело... так говорят трезвые.",
+  "Монетка против. Можно поспорить — но она снова против.",
+  "Сегодня нет. Завтра спроси ещё раз.",
+  "Твоя печень тихо плачет от счастья.",
+  "Ты выиграл. Или проиграл. Зависит от компании.",
+  "Монетка проголосовала за минеральную воду.",
+];
+
+const coin       = document.getElementById('coin');
+const phrase     = document.getElementById('phrase');
+const flipBtn    = document.getElementById('flipBtn');
+const resultRing = document.getElementById('resultRing');
+
+let spinning   = false;
+let currentDeg = 0;
+
+function haptic(type) {
+  try {
+    if (tg?.HapticFeedback) {
+      if (type === 'impact')       tg.HapticFeedback.impactOccurred('medium');
+      else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+      else if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+    } else {
+      navigator.vibrate?.([30]);
+    }
+  } catch(e) {}
+}
+
+function flipCoin() {
+  if (spinning) return;
+  spinning = true;
+  flipBtn.disabled = true;
+
+  haptic('impact');
+
+  phrase.classList.remove('visible', 'drink', 'no-drink');
+  resultRing.className = 'result-ring';
+  coin.classList.remove('idle');
+  coin.style.transform = '';
+
+  const result     = Math.random() < 0.5 ? 'drink' : 'no-drink';
+  const spins      = 8 + Math.floor(Math.random() * 5);
+  const finalAngle = result === 'drink' ? 0 : 180;
+  const fromDeg    = currentDeg % 360;
+  const toDeg      = fromDeg + (spins * 360 - fromDeg % 360) + finalAngle;
+  const duration   = 2400;
+  const start      = performance.now();
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3.5); }
+
+  function animate(now) {
+    const p   = Math.min((now - start) / duration, 1);
+    const deg = fromDeg + (toDeg - fromDeg) * easeOut(p);
+    coin.style.transform = `rotateY(${deg}deg)`;
+    currentDeg = deg;
+    p < 1 ? requestAnimationFrame(animate) : onLanded(result);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function onLanded(result) {
+  spinning = false;
+  haptic(result === 'drink' ? 'warning' : 'success');
+
+  resultRing.className = `result-ring ${result === 'drink' ? 'drink-ring' : 'no-drink-ring'} show`;
+
+  const pool = result === 'drink' ? PHRASES_DRINK : PHRASES_NO_DRINK;
+  phrase.textContent = pool[Math.floor(Math.random() * pool.length)];
+  phrase.className   = `phrase ${result} visible`;
+
+  flipBtn.className   = `btn ${result}-btn`;
+  flipBtn.textContent = '🎲 Ещё раз';
+  flipBtn.disabled    = false;
+
+  if (result === 'drink') spawnConfetti();
+
+  setTimeout(() => coin.classList.add('idle'), 400);
+}
+
+function spawnConfetti() {
+  const wrap   = document.getElementById('confetti');
+  wrap.innerHTML = '';
+  const colors = ['#f5c842','#ff6b35','#ffd700','#fff','#fde68a','#c9952a'];
+  for (let i = 0; i < 45; i++) {
+    const el   = document.createElement('div');
+    el.className = 'conf';
+    const size = 6 + Math.random() * 10;
+    el.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      animation-delay:${Math.random()*0.5}s;
+      animation-duration:${1.2+Math.random()*0.9}s;
+    `;
+    wrap.appendChild(el);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 2600);
+}
+
+(function spawnParticles() {
+  const wrap = document.getElementById('particles');
+  for (let i = 0; i < 12; i++) {
+    const p  = document.createElement('div');
+    p.className = 'particle';
+    const size = 3 + Math.random() * 5;
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${size}px; height:${size}px;
+      background:rgba(245,200,66,0.5);
+      animation-duration:${9+Math.random()*10}s;
+      animation-delay:${Math.random()*9}s;
+    `;
+    wrap.appendChild(p);
+  }
+})();
+</script>
+</body>
+</html>
