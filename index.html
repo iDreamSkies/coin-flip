@@ -91,9 +91,8 @@ body {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding: 2px 32px 4px;
+  padding: 2px 16px 4px;
   scrollbar-width: none;
-  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
 .modes::-webkit-scrollbar { display: none; }
@@ -131,9 +130,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 16px 20px;
+  justify-content: space-evenly;
+  gap: 0;
+  padding: 8px 20px;
 }
 
 /* статистика */
@@ -141,7 +140,6 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 32px;
 }
 .stat-badge {
   padding: 3px 10px;
@@ -170,8 +168,8 @@ body {
 .scene {
   position: relative;
   perspective: 900px;
-  width: 200px;
-  height: 200px;
+  width: 240px;
+  height: 240px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -512,6 +510,10 @@ function buildModes() {
     btn.onclick = () => setMode(i);
     wrap.appendChild(btn);
   });
+  // spacer — фикс правого края при overflow scroll
+  const spacer = document.createElement('div');
+  spacer.style.cssText = 'min-width:16px;flex-shrink:0;';
+  wrap.appendChild(spacer);
 }
 
 function setMode(i) {
