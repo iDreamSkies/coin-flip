@@ -337,14 +337,31 @@ body {
 /* футер */
 .footer {
   position: relative; z-index: 2;
-  text-align: center;
-  padding-bottom: 6px;
+  padding: 0 16px 8px;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 .footer a {
   display: inline-flex; align-items: center; gap: 5px;
   text-decoration: none; opacity: 0.18; transition: opacity 0.2s;
 }
 .footer a:hover { opacity: 0.4; }
+.online-pill {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.online-text {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #2a5a38;
+}
 
 /* тост */
 .toast {
@@ -390,10 +407,7 @@ body {
     <span class="stat-sep">·</span>
     <div class="stat-badge no" id="noCount">—</div>
   </div>
-  <div class="online-wrap" id="onlineWrap" style="display:none">
-    <span class="online-dot"></span>
-    <span class="online-text" id="onlineCount"></span>
-  </div>
+
 
   <div class="scene" id="scene" onclick="flipCoin()">
     <div class="coin-floater idle" id="coinFloater">
@@ -424,10 +438,16 @@ body {
 </div>
 
 <footer class="footer">
-  <a href="https://t.me/dreamskies">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="#f0f0f0"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 14.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
-    <span style="font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:600;color:#f0f0f0;letter-spacing:0.04em;">DreamSkies</span>
-  </a>
+  <div class="footer-inner">
+    <a href="https://t.me/dreamskies">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#f0f0f0"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 14.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
+      <span style="font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:600;color:#f0f0f0;letter-spacing:0.04em;">DreamSkies</span>
+    </a>
+    <div class="online-pill" id="onlineWrap" style="display:none">
+      <span class="online-dot"></span>
+      <span class="online-text" id="onlineCount">0</span>
+    </div>
+  </div>
 </footer>
 
 <script>
@@ -785,7 +805,7 @@ function initFirebase() {
       const el   = document.getElementById('onlineCount');
       if (wrap) {
         wrap.style.display = n > 0 ? 'flex' : 'none';
-        el.textContent = n + ' ' + plural(n, 'человек', 'человека', 'человек') + ' онлайн';
+        el.textContent = n;
       }
     });
 
